@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{\"components/Navbar.tsx -> @kinde-oss/kinde-auth-nextjs\":{\"id\":\"components/Navbar.tsx -> @kinde-oss/kinde-auth-nextjs\",\"files\":[\"static/chunks/_app-pages-browser_node_modules_kinde-oss_kinde-auth-nextjs_dist_index_js.js\"]}}"
+self.__REACT_LOADABLE_MANIFEST="{}"
