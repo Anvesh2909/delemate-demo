@@ -1,4 +1,4 @@
-// File: /Users/tarakram/Downloads/delemate-website/src/app/blog/page.tsx
+// File: /home/anvesh-yadav/Projects/delemate/src/app/blog/page.tsx
 import * as entry from '../../../../src/app/blog/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
