@@ -1,6 +1,6 @@
 {
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/blog/[slug]/page": "app/blog/[slug]/page.js",
+  "/page": "app/page.js",
   "/blog/page": "app/blog/page.js",
-  "/blog/create/admin123/page": "app/blog/create/admin123/page.js"
+  "/blog/[slug]/page": "app/blog/[slug]/page.js",
+  "/blog/create/page": "app/blog/create/page.js"
 }
