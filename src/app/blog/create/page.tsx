@@ -69,9 +69,8 @@ const Page = () => {
     const handleAuthentication = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Get credentials from environment variables
-        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@delemate.com';
-        const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
+        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+        const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
         if (authCredentials.email === adminEmail && authCredentials.password === adminPassword) {
             setIsAuthenticated(true);
