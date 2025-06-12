@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useState } from 'react';
+import React, { useState,useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import {
@@ -28,7 +27,8 @@ import {
 } from "@chakra-ui/react";
 import { FaPlus, FaTrash, FaArrowLeft, FaImage, FaClock, FaCalendarAlt, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import MaxWidthWrapper from '@/components/MaxWidthWrapper';
-
+import supabase from '@/lib/supabase';
+import { FaUpload } from 'react-icons/fa';
 interface Paragraph {
     heading?: string;
     subheading?: string;
@@ -55,7 +55,10 @@ const Page = () => {
         email: '',
         password: ''
     });
-
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState<BlogForm>({
         title: '',
         subtitle: '',
@@ -65,7 +68,6 @@ const Page = () => {
         text: [{ paragraph: '' }]
     });
 
-    // Authentication handler
     const handleAuthentication = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -122,6 +124,63 @@ const Page = () => {
             setFormData({ ...formData, text: updatedText });
         }
     };
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedImage(e.target.files[0]);
+        }
+    };
+
+    const uploadImage = async () => {
+        if (!selectedImage) return null;
+
+        setIsUploading(true);
+        setUploadProgress(0);
+
+        try {
+            const fileName = `${Date.now()}_${selectedImage.name.replace(/\s+/g, '_')}`;
+            const fileArrayBuffer = await selectedImage.arrayBuffer();
+            const fileBlob = new Blob([fileArrayBuffer]);
+
+            const { data, error } = await supabase.storage
+                .from('blogs-images')
+                .upload(fileName, fileBlob, {
+                    contentType: selectedImage.type
+                });
+
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            const imageUrl = supabase.storage
+                .from('blogs-images')
+                .getPublicUrl(fileName).data.publicUrl;
+
+            // Debug: Log the URL
+            console.log('Generated image URL:', imageUrl);
+
+            // Test if URL is accessible
+            const testImage = new Image();
+            testImage.onload = () => console.log('Image loaded successfully');
+            testImage.onerror = () => console.log('Image failed to load');
+            testImage.src = imageUrl;
+
+            setUploadProgress(100);
+            setFormData({ ...formData, link: imageUrl });
+            return imageUrl;
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            toast({
+                title: "Upload failed",
+                description: "Could not upload image. Please try again.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return null;
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -150,13 +209,39 @@ const Page = () => {
         setIsSubmitting(true);
 
         try {
-            // Convert min to number if it's a string
-            const dataToSubmit = {
+            // Create a copy of form data to submit
+            let dataToSubmit = {
                 ...formData,
                 min: Number(formData.min)
             };
 
+            // Upload image if one is selected
+            if (selectedImage) {
+                console.log("Uploading image...");
+                const imageUrl = await uploadImage();
+                console.log("Image upload result:", imageUrl);
+
+                if (imageUrl) {
+                    console.log("Setting image URL in submission data:", imageUrl);
+                    dataToSubmit.link = imageUrl;
+                } else {
+                    console.warn("Image upload failed or returned null");
+                    toast({
+                        title: "Image upload issue",
+                        description: "Could not upload the image. Submitting without image.",
+                        status: "warning",
+                        duration: 3000,
+                        isClosable: true,
+                    });
+                }
+            }
+
+            // Log the final data being submitted
+            console.log("Submitting blog data:", dataToSubmit);
+
+            // Submit with the updated data that includes the image link
             const response = await axios.post('/api/blog', dataToSubmit);
+            console.log("Server response:", response.data);
 
             toast({
                 title: "Blog created successfully!",
@@ -164,8 +249,6 @@ const Page = () => {
                 duration: 5000,
                 isClosable: true,
             });
-
-            // Clear form or redirect
             router.push('/blog');
         } catch (error) {
             console.error("Error creating blog:", error);
@@ -319,20 +402,64 @@ const Page = () => {
 
                                             <HStack spacing={6} flexWrap={{ base: "wrap", md: "nowrap" }} gap={4}>
                                                 <FormControl flex="1">
-                                                    <FormLabel fontWeight="medium">Image URL</FormLabel>
-                                                    <InputGroup>
-                                                        <InputLeftElement pointerEvents="none">
-                                                            <FaImage color="#4299E1" />
-                                                        </InputLeftElement>
-                                                        <Input
-                                                            name="link"
-                                                            value={formData.link}
-                                                            onChange={handleChange}
-                                                            pl="2.5rem"
-                                                            placeholder="Enter image URL (optional)"
-                                                            focusBorderColor="blue.400"
-                                                        />
-                                                    </InputGroup>
+                                                    <FormLabel fontWeight="medium">Blog Image</FormLabel>
+                                                    <VStack align="stretch" spacing={2}>
+                                                        <HStack>
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                onChange={handleFileChange}
+                                                                style={{ display: 'none' }}
+                                                                ref={fileInputRef}
+                                                            />
+                                                            <Button
+                                                                leftIcon={<FaUpload />}
+                                                                onClick={() => fileInputRef.current?.click()}
+                                                                colorScheme="blue"
+                                                                isLoading={isUploading}
+                                                                loadingText={`Uploading ${uploadProgress}%`}
+                                                                variant="outline"
+                                                                size="sm"
+                                                            >
+                                                                {selectedImage ? 'Change Image' : 'Upload Image'}
+                                                            </Button>
+                                                            {selectedImage && (
+                                                                <Text fontSize="sm" color="gray.600">
+                                                                    {selectedImage.name.length > 20
+                                                                        ? selectedImage.name.substring(0, 20) + "..."
+                                                                        : selectedImage.name}
+                                                                </Text>
+                                                            )}
+                                                        </HStack>
+
+                                                        {formData.link && (
+                                                            <Box mt={2} position="relative">
+                                                                <img
+                                                                    src={formData.link}
+                                                                    alt="Preview"
+                                                                    style={{
+                                                                        maxHeight: '100px',
+                                                                        maxWidth: '100%',
+                                                                        borderRadius: '4px'
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        )}
+
+                                                        <InputGroup>
+                                                            <InputLeftElement pointerEvents="none">
+                                                                <FaImage color="#4299E1" />
+                                                            </InputLeftElement>
+                                                            <Input
+                                                                name="link"
+                                                                value={formData.link}
+                                                                onChange={handleChange}
+                                                                pl="2.5rem"
+                                                                placeholder="Or enter image URL directly"
+                                                                focusBorderColor="blue.400"
+                                                            />
+                                                        </InputGroup>
+                                                    </VStack>
                                                 </FormControl>
 
                                                 <FormControl flex="1">

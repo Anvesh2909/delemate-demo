@@ -5,6 +5,7 @@ import { ChakraProvider, Button, Text, Skeleton, Stack, Box } from "@chakra-ui/r
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Paragraph {
   heading?: string;
@@ -94,13 +95,13 @@ const Page = () => {
                           </div>
 
                           {featuredBlog.link && (
-                              <div className="mb-5 aspect-video overflow-hidden">
-                                <div
-                                    className="w-full h-full bg-center bg-cover"
-                                    style={{
-                                      backgroundImage: `url('${featuredBlog.link}')`,
-                                      height: "400px"
-                                    }}
+                              <div className="mb-5 relative aspect-video overflow-hidden rounded-lg">
+                                <Image
+                                    src={featuredBlog.link}
+                                    alt={featuredBlog.title}
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 />
                               </div>
                           )}
@@ -136,12 +137,13 @@ const Page = () => {
                                   </div>
 
                                   {blog.link && (
-                                      <div className="md:w-1/3 h-32 overflow-hidden flex-shrink-0">
-                                        <div
-                                            className="w-full h-full bg-center bg-cover"
-                                            style={{
-                                              backgroundImage: `url('${blog.link}')`
-                                            }}
+                                      <div className="md:w-1/3 h-32 relative overflow-hidden rounded-lg flex-shrink-0">
+                                        <Image
+                                            src={blog.link}
+                                            alt={blog.title}
+                                            fill
+                                            className="object-cover"
+                                            sizes="(max-width: 768px) 100vw, 33vw"
                                         />
                                       </div>
                                   )}

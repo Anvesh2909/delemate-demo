@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import { ChakraProvider, Spinner, Box, Divider } from "@chakra-ui/react";
 import { IoArrowBack } from "react-icons/io5";
+import Image from "next/image";
 
 interface Paragraph {
   heading?: string;
@@ -114,12 +115,14 @@ const Page = () => {
               )}
 
               {blog.link && (
-                  <div className="my-8">
-                    <div
-                        className="w-full aspect-[16/9] bg-center bg-cover"
-                        style={{
-                          backgroundImage: `url('${blog.link}')`
-                        }}
+                  <div className="my-8 relative aspect-[16/9] overflow-hidden rounded-lg">
+                    <Image
+                        src={blog.link}
+                        alt={blog.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        priority
                     />
                   </div>
               )}
